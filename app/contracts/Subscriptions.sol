@@ -23,7 +23,7 @@ contract Subscriptions {
   /** Charge
   Allow contact to be excuted to request payment from subscribers. This
   can only be executed once per month. Caller of this function will recieve
-  a small payout of the benefits
+  a small payout of the benefits. Possibly restrict this to subscribers and producers?
   */
 
   /** Create Producer
