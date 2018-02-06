@@ -35,6 +35,7 @@ For an MVP, the Patrecoin DApp should have the following functionality
 - Allow producers to publish their address to the smart contract
 - Allow subscribers to subscribe to the address of their favourite producers
 - Allow miners to execute a contract (which can only be executed once per month), in return for a small cut of the overall system payments
+- Allow users to deposit ETH to the smart contract address
 - Maintainer, recieves a small cut of the overall system payments
 
 ### Possible extra features
