@@ -13,21 +13,40 @@ contract Subscriptions {
   // week in unix time
   uint week = 604800;
 
-  // need a mapping of subscriber address to their balance
-  mapping (address => uint) public balances;
-
   // need a struct of Producers
   // Each producer has a public address
-  // and a list of subscribers
+  // and a list of their subscribers
   struct Producer {
     address publicAddress;
     address[] subscribers;
+    uint lastPayment;
   }
 
-  Producer[] public producers;
+  mapping (address => Producer) public producers;
+
+  // Subscriber
+  // Each subscriber has a balance
+  // and a list of people they are subscribed to
+  struct Subscriber {
+    uint balance; // defaults to zero
+    address[] subscribedTo // defaults to empty array
+  }
+
+  mapping (address => Subscriber) public subscribers;
   
-  // need to keep last execution in memory, cannot execute a charge call more than once a week
-  uint lastExecution;
+  event Subscribed(address subscriber, address subscribedTo);
+  event Unsubscribed(address subscriber, address subscribedTo);
+  event Deposited(address subscriber, uint deposit);
+  event Charged(address producer, address[] subsribers, uint payout);
+
+  // Deposit
+  // Allow subscribers to deposit ETH
+  // Will be used for weekly payouts
+  // Non-refundable
+  function deposit() public payable {
+    Subscriber storage subscriber = subscribers[msg.sender];
+    subscriber.balance += msg.value;
+  }
 
   // need an event for subscribing, unsubscribing, etc.
 
@@ -39,6 +58,14 @@ contract Subscriptions {
 
   Emits a Subscribe event
   */
+  function subscribe(address subscribeTo) public {
+    // add subscribeTo address to subscriber if it doesn't exist
+    // loop through subscribeTo array and subscribe
+    Subscriber storage subscriber = subscribers[msg.sender];
+    
+    // add subscriber address to producer subcribers array
+    Producer storage producer = producers[subscribeTo];
+  }
 
   /** Unsubscribe
   Checks if sender is already subscribed to the producer. If they are they 
@@ -50,29 +77,14 @@ contract Subscriptions {
   */
 
   /** Charge
-  Allow contact to be excuted to request payment from subscribers. This
-  can only be executed once per week. Caller of this function will recieve
+  Two design options:
+  1 - Allow contact to be excuted by anyone to request payment from subscribers. This
+  can only be executed once per week. Would total all subscribers payments and send eth to all producers.
+  Possibly this could be very expensive. Caller of this function will recieve
   a small payout of the benefits. Possibly restrict this to subscribers and producers?
-  */
-
-  /** Create Producer
-  Checks if sender is a producer, if not, adds them to the list of producers.
-
-  This function execute if the sender and the producer are the same
   
-  Emits a create producer event
-  */
-
-  
-  /** Destroy Producer
-  Checks if sender is a producer, if so, removes them from the list of producers.
-
-  This function execute if the sender and the producer are the same
-  
-  Emits a destroy producer event
-  */
-
-  /**
-  Deposit Money
+  2 - Allow contract to be executed by producer in order to collect weekly income.
+  Slightly cumbersome user experience. Could allow automation for contract to be executed weekly on
+  the producers behalf?
   */
 }

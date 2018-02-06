@@ -17,8 +17,8 @@ People who produce content and have address associated with the patrecoin smart 
 - Subscribers
 These people will subscribe to content producers on the patreon smart contract and pay them on a regular basis on order for them to continue their work.
 
-- Miners
-These people will get a reward for executing a "charge" contract once per month.
+- ~~Miners
+These people will get a reward for executing a "charge" contract once per month.~~
 
 - Maintainer
 These people will get a cut of the monthly payments for upkeep of the DApp.
@@ -34,7 +34,7 @@ These people will get a cut of the monthly payments for upkeep of the DApp.
 For an MVP, the Patrecoin DApp should have the following functionality
 - Allow producers to publish their address to the smart contract
 - Allow subscribers to subscribe to the address of their favourite producers
-- Allow miners to execute a contract (which can only be executed once per month), in return for a small cut of the overall system payments
+- ~~Allow miners to execute a contract (which can only be executed once per month), in return for a small cut of the overall system payments~~. Allow producers to call a contract once a week to collect their payments
 - Allow users to deposit ETH to the smart contract address
 - Maintainer, recieves a small cut of the overall system payments
 
