@@ -3,12 +3,12 @@
 ## A Patreon rip off, build on the Ethereum Blockchain
 
 ### Proposal
-Current Content Payment Platforms of subscription for content producer0 have 2 main pitfalls:
+Current content payment platforms for subscriptions for content producers have 2 main pitfalls:
 1. They rely on trust that payments will be made on time each month.
 2. If the platform of choice disappears overnight, the revenue stream for those content producers expires.
-3. These Platforms have control over what does and does not get monotonised.
+3. These platforms have control over what does and does not get monotonised.
 
-By decentralizing these 3 aspects of content payment, the control is put into the hands of the Producers to determine how and when they get paid for their work. It also protects them against the payment network itself going down, as the smart contract itself 
+By decentralizing these 3 aspects of content payment, the control is put into the hands of the producers to determine how and when they get paid for their work. It also protects them against the payment network itself going down, as the smart contract itself 
 
 ### Stakeholders in the DApp
 - Content Producers (Producers)
