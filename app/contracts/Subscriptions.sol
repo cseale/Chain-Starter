@@ -36,7 +36,7 @@ contract Subscriptions {
   event Subscribed(address subscriber, address subscribedTo);
   event Unsubscribed(address subscriber, address subscribedTo);
   event Deposited(address subscriber, uint deposit  );
-  event Charged(address producer, address[] subsribers, uint payout);
+  event Charged(address producer, address[] subsribers, uint payout, uint service);
 
 
   function Subscriptions() public {
@@ -50,6 +50,7 @@ contract Subscriptions {
   function deposit() public payable {
     Subscriber storage subscriber = subscribers[msg.sender];
     subscriber.balance += msg.value;
+    Deposited(msg.sender, msg.value);
   }
 
   // need an event for subscribing, unsubscribing, etc.
@@ -91,6 +92,7 @@ contract Subscriptions {
     if (!subscriberExists) {
       producer.subscribers.push(msg.sender);
     }
+    Subscribed(msg.sender, subscribeTo);
   }
 
   /** unsubscribe()
@@ -101,27 +103,33 @@ contract Subscriptions {
   
   Emit an Unsubscribe event
   */
-  // function unsubscribe(address subscribeTo) public {
-  //   // add subscribeTo address to subscriber if it doesn't exist
-  //   // loop through subscribeTo array and subscribe
-  //   Subscriber storage subscriber = subscribers[msg.sender];
-    
-  //   // add subscriber address to producer subcribers array
-  //   Producer storage producer = producers[subscribeTo];
-  // }
+  function unsubscribe(address unsubscribeFrom) public {
+    // remove unsubscribeFrom address to subscriber if it exists
+    Subscriber storage subscriber = subscribers[msg.sender];
+    for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
+      if (subscriber.subscribedTo[i] == unsubscribeFrom) {
+        remove(i, subscriber.subscribedTo);
+        break;
+      }
+    }
+
+    // add msg sender address to producer subcribers array
+    Producer storage producer = producers[unsubscribeFrom];
+    for (uint j = 0; j < producer.subscribers.length; j++) {
+      if (producer.subscribers[i] == msg.sender) {
+        remove(i, producer.subscribers);
+        break;
+      }
+    }
+    Unsubscribed(msg.sender, unsubscribeFrom);
+  }
 
   /** charge()
-  Two design options:
-  1 - Allow contact to be excuted by anyone to request payment from subscribers. This
-  can only be executed once per week. Would total all subscribers payments and send eth to all producers.
-  Possibly this could be very expensive. Caller of this function will recieve
-  a small payout of the benefits. Possibly restrict this to subscribers and producers?
-  
-  2 - Allow contract to be executed by producer in order to collect weekly income.
+  Allow contract to be executed by producer in order to collect weekly income.
   Slightly cumbersome user experience. Could allow automation for contract to be executed weekly on
   the producers behalf?
   */
-  function charge() public {
+  function charge() external {
     uint payout;
     uint service;
 
@@ -144,8 +152,20 @@ contract Subscriptions {
     // send total ETH to producer address
     producer.lastPayment = now;
     msg.sender.transfer(payout);
-
-    // need to include service charge
     serviceAddress.transfer(serviceCharge);
+    Charged(msg.sender, producer.subscribers, payout, service);
+  }
+
+  function remove(uint index, address[] storage array) private returns(address[]) {
+      if (index >= array.length) {
+        return;
+      }
+
+      for (uint i = index; i<array.length-1; i++) {
+          array[i] = array[i+1];
+      }
+      delete array[array.length-1];
+      array.length--;
+      return array;
   }
 }
