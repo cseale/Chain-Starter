@@ -42,4 +42,5 @@ For an MVP, the Patrecoin DApp should have the following functionality
 - Request payments into smart contract a week before the charge is applied in order to make sure that all producers will be paid
 - Provide democracised content regulation which puts control into the hands of subscribers in order to fine producers of inappropriate content
 - Provide a token which could be used to incentavise people to use the system.
+- Allow the charge model to be more flexible, allowing producers to collect payment whenever they like, calculating payment via calculation: ``` time since last payment in seconds * charge per second ```, while still retaining the restriction of charging no less than once a week. This would eliminate risk of collecting payment any one week.
 

@@ -1,14 +1,14 @@
 pragma solidity ^0.4.0;
 
 contract Subscriptions {
+  // service address
+  address serviceAddress;
+
   // ETH charge per week, in Gwei
-  uint chargePerWeek = 10;
+  uint weeklyCharge = 9;
 
   // Service charge is 10%
   uint serviceCharge = 1;
-
-  // Miner payment of 10%
-  uint minerPayment = 1;
 
   // week in unix time
   uint week = 604800;
@@ -17,7 +17,6 @@ contract Subscriptions {
   // Each producer has a public address
   // and a list of their subscribers
   struct Producer {
-    address publicAddress;
     address[] subscribers;
     uint lastPayment;
   }
@@ -29,15 +28,20 @@ contract Subscriptions {
   // and a list of people they are subscribed to
   struct Subscriber {
     uint balance; // defaults to zero
-    address[] subscribedTo // defaults to empty array
+    address[] subscribedTo; // defaults to empty array
   }
 
   mapping (address => Subscriber) public subscribers;
   
   event Subscribed(address subscriber, address subscribedTo);
   event Unsubscribed(address subscriber, address subscribedTo);
-  event Deposited(address subscriber, uint deposit);
+  event Deposited(address subscriber, uint deposit  );
   event Charged(address producer, address[] subsribers, uint payout);
+
+
+  function Subscriptions() public {
+    serviceAddress = msg.sender;
+  }
 
   // Deposit
   // Allow subscribers to deposit ETH
@@ -50,7 +54,7 @@ contract Subscriptions {
 
   // need an event for subscribing, unsubscribing, etc.
 
-  /** Subscribe
+  /** subscribe()
   Checks if sender is already subscribed to the producer. If they are
   not they will be added to the array. 
   
@@ -62,12 +66,34 @@ contract Subscriptions {
     // add subscribeTo address to subscriber if it doesn't exist
     // loop through subscribeTo array and subscribe
     Subscriber storage subscriber = subscribers[msg.sender];
-    
-    // add subscriber address to producer subcribers array
+    bool subscribedToExists = false;
+    for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
+      if (subscriber.subscribedTo[i] == subscribeTo) {
+        subscribedToExists = true;
+        break;
+      }
+    }
+
+    if (!subscribedToExists) {
+      subscriber.subscribedTo.push(subscribeTo);
+    }
+
+    // add msg sender address to producer subcribers array
     Producer storage producer = producers[subscribeTo];
+    bool subscriberExists = false;
+    for (uint j = 0; j < producer.subscribers.length; j++) {
+      if (producer.subscribers[i] == msg.sender) {
+        subscriberExists = true;
+        break;
+      }
+    }
+
+    if (!subscriberExists) {
+      producer.subscribers.push(msg.sender);
+    }
   }
 
-  /** Unsubscribe
+  /** unsubscribe()
   Checks if sender is already subscribed to the producer. If they are they 
   will be removed from the array. 
 
@@ -75,8 +101,16 @@ contract Subscriptions {
   
   Emit an Unsubscribe event
   */
+  // function unsubscribe(address subscribeTo) public {
+  //   // add subscribeTo address to subscriber if it doesn't exist
+  //   // loop through subscribeTo array and subscribe
+  //   Subscriber storage subscriber = subscribers[msg.sender];
+    
+  //   // add subscriber address to producer subcribers array
+  //   Producer storage producer = producers[subscribeTo];
+  // }
 
-  /** Charge
+  /** charge()
   Two design options:
   1 - Allow contact to be excuted by anyone to request payment from subscribers. This
   can only be executed once per week. Would total all subscribers payments and send eth to all producers.
@@ -87,4 +121,31 @@ contract Subscriptions {
   Slightly cumbersome user experience. Could allow automation for contract to be executed weekly on
   the producers behalf?
   */
+  function charge() public {
+    uint payout;
+    uint service;
+
+    // only allow a producer to call the charge function once a week
+    Producer storage producer = producers[msg.sender];
+    require(producer.lastPayment + week <= now);
+
+    // calculate payout
+    for (uint i = 0; i < producer.subscribers.length; i++) {
+      // get subscriber 
+      address subscriberAddress = producer.subscribers[1];
+      Subscriber storage subscriber = subscribers[subscriberAddress];
+      //check balance
+      if (subscriber.balance >= weeklyCharge) {
+        subscriber.balance -= weeklyCharge + serviceCharge;
+        payout += weeklyCharge;
+        service += serviceCharge;
+      } 
+    }
+    // send total ETH to producer address
+    producer.lastPayment = now;
+    msg.sender.transfer(payout);
+
+    // need to include service charge
+    serviceAddress.transfer(serviceCharge);
+  }
 }
