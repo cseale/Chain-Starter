@@ -53,17 +53,13 @@ contract Subscriptions {
     Deposited(msg.sender, msg.value);
   }
 
-  // need an event for subscribing, unsubscribing, etc.
-
-  /** subscribe()
-  Checks if sender is already subscribed to the producer. If they are
-  not they will be added to the array. 
+  // subscribe()
+  // Checks if sender is already subscribed to the producer. If they are
+  // not they will be added to the array. 
   
-  This function execute if the sender and the subscriber are the same
-
-  Emits a Subscribe event
-  */
+  // This function execute if the sender and the subscriber are the same
   function subscribe(address subscribeTo) public {
+    require(msg.sender != subscribeTo);
     // add subscribeTo address to subscriber if it doesn't exist
     // loop through subscribeTo array and subscribe
     Subscriber storage subscriber = subscribers[msg.sender];
@@ -95,15 +91,13 @@ contract Subscriptions {
     Subscribed(msg.sender, subscribeTo);
   }
 
-  /** unsubscribe()
-  Checks if sender is already subscribed to the producer. If they are they 
-  will be removed from the array. 
-
-  This function execute if the sender and the subscriber are the same
-  
-  Emit an Unsubscribe event
-  */
+  // unsubscribe()
+  // Checks if sender is already subscribed to the producer. If they are they 
+  // will be removed from the array. 
+  // This function will not execute if the sender and the subscriber are the same
   function unsubscribe(address unsubscribeFrom) public {
+    require(msg.sender != unsubscribeFrom);
+
     // remove unsubscribeFrom address to subscriber if it exists
     Subscriber storage subscriber = subscribers[msg.sender];
     for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
@@ -124,11 +118,10 @@ contract Subscriptions {
     Unsubscribed(msg.sender, unsubscribeFrom);
   }
 
-  /** charge()
-  Allow contract to be executed by producer in order to collect weekly income.
-  Slightly cumbersome user experience. Could allow automation for contract to be executed weekly on
-  the producers behalf?
-  */
+  // charge()
+  // Allow contract to be executed by producer in order to collect weekly income.
+  // Slightly cumbersome user experience. Could allow automation for contract to be executed weekly on
+  // the producers behalf?
   function charge() external {
     uint payout;
     uint service;
@@ -155,6 +148,21 @@ contract Subscriptions {
     serviceAddress.transfer(serviceCharge);
     Charged(msg.sender, producer.subscribers, payout, service);
   }
+
+  // Below are possible functions that we need to implement. 
+  // Investigate access to public state variables on the blockchain
+
+  // getSubscriptions(account) public constant
+  // Allow users to see what subscriptions they have
+
+  // getBalance(account) public constant
+  // Allow users to see what their balance is
+
+  // getSubscribers(account) public constant
+  // Allow users to see what subscribers they have
+
+  // getLastPayment(account) public constant
+  // Allow users to see what time they last collected payment
 
   function remove(uint index, address[] storage array) private returns(address[]) {
       if (index >= array.length) {
