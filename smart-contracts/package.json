@@ -1,7 +1,7 @@
 {
-  "name": "patrecoin",
+  "name": "@patrecoin/smart-contracts",
   "version": "0.0.1",
-  "description": "\u0016A Patreon rip off, build on the Ethereum Blockchain",
+  "description": "A Patreon rip off, build on the Ethereum Blockchain",
   "main": "index.js",
   "directories": {
     "test": "test"

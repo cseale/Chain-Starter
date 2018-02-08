@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 contract Subscriptions {
   // service address
-  address serviceAddress;
+  address public serviceAddress;
 
   // ETH charge per week, in Gwei
   uint weeklyCharge = 9;
