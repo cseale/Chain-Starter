@@ -8,4 +8,17 @@ contract('Subscriptions', function (accounts) {
       assert.equal(serviceAddress, accounts[0]);
     });
   });
+
+  it('should allow ETH to be deposited for an address', function () {
+    var valueToSend = 2000;
+    var patrecoin;
+    return Subscriptions.deployed().then(function (instance) {
+      patrecoin = instance;
+      return patrecoin.deposit({value: valueToSend, from: accounts[0]});;
+    }).then(function () {
+      return patrecoin.getBalance(accounts[0])
+    }).then(function (balance) {
+      assert.equal(balance, valueToSend);
+    });
+  });
 });

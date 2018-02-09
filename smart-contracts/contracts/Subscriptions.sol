@@ -21,7 +21,7 @@ contract Subscriptions {
     uint lastPayment;
   }
 
-  mapping (address => Producer) public producers;
+  mapping (address => Producer) producers;
 
   // Subscriber
   // Each subscriber has a balance
@@ -31,7 +31,7 @@ contract Subscriptions {
     address[] subscribedTo; // defaults to empty array
   }
 
-  mapping (address => Subscriber) public subscribers;
+  mapping (address => Subscriber) subscribers;
   
   event Subscribed(address subscriber, address subscribedTo);
   event Unsubscribed(address subscriber, address subscribedTo);
@@ -157,6 +157,9 @@ contract Subscriptions {
 
   // getBalance(account) public constant
   // Allow users to see what their balance is
+  function getBalance(address account) public constant returns (uint) {
+    return subscribers[account].balance;
+  }
 
   // getSubscribers(account) public constant
   // Allow users to see what subscribers they have
