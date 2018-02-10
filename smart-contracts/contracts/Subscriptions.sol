@@ -149,11 +149,11 @@ contract Subscriptions {
     Charged(msg.sender, producer.subscribers, payout, service);
   }
 
-  // Below are possible functions that we need to implement. 
-  // Investigate access to public state variables on the blockchain
-
   // getSubscriptions(account) public constant
   // Allow users to see what subscriptions they have
+  function getSubscriptions(address account) public constant returns (address[]) {
+    return subscribers[account].subscribedTo;
+  }
 
   // getBalance(account) public constant
   // Allow users to see what their balance is
@@ -163,9 +163,15 @@ contract Subscriptions {
 
   // getSubscribers(account) public constant
   // Allow users to see what subscribers they have
+  function getSubscribers(address account) public constant returns (address[]) {
+    return producers[account].subscribers;
+  }
 
   // getLastPayment(account) public constant
   // Allow users to see what time they last collected payment
+  function getLastPayment(address account) public constant returns (uint) {
+    return producers[account].lastPayment;
+  }
 
   function remove(uint index, address[] storage array) private returns(address[]) {
       if (index >= array.length) {
