@@ -19,3 +19,21 @@ npm run compile
 ```
 npm test
 ```
+
+## Structs
+
+- Producer
+  - lastChargedDate (uint) - Date that producer last executes the charge function
+  - subscribers (Subscription[]) - see Subscription struct
+
+- Subscriptions
+  - account (address) - Address of subscriber
+  - lastPaymentDate (uint) - Date the subscriber last paid. Defaults to date of subscription
+  - chargePerSecond (uint) - Optional. Used to calculate payment.
+
+- Subscriber 
+  - balance (uint) - current ETH deposited
+  - subscribedTo (Producer[]) - active subscriptions
+
+## Functions
+- To be detailed

@@ -9,7 +9,7 @@ contract('Subscriptions', function (accounts) {
     });
   });
 
-  it('should allow ETH to be deposited for an address', function () {
+  it('should allow ETH to be deposited for an account', function () {
     var valueToSend = web3.toWei(1, "ether");
     var patrecoin;
     return Subscriptions.deployed().then(function (instance) {
@@ -23,7 +23,7 @@ contract('Subscriptions', function (accounts) {
     });
   });
 
-  it('should allow a sender to subscribe to an address', function () {
+  it('should allow a sender to subscribe to and unsubscribe from an account', function () {
     var subscriberAccount = accounts[0];
     var producerAccount = accounts[1];
     var patrecoin;
@@ -61,7 +61,27 @@ contract('Subscriptions', function (accounts) {
     });
   });
 
-  it('should allow a producer to charge all subscribers', function () {
-
+  it('should allow a producer to charge all subscriber accounts', function () {
+    // Deposit some ether
+    var subscriberAccount = accounts[0];
+    var producerAccount = accounts[1];
+    var valueToSend = web3.toWei(1, "ether");
+    var patrecoin;
+    return Subscriptions.deployed().then(function (instance) {
+      patrecoin = instance;
+      return patrecoin.deposit({value: valueToSend, from: accounts[0]});;
+    })
+    // Subscribe to an account
+    .then(function () {
+      return patrecoin.subscribe(producerAccount);
+    })
+    // Charge that account
+    .then(function () {
+      return patrecoin.charge({from: producerAccount});
+    })
+    // assert
+    .then(function () {
+      assert.fail()
+    });
   });
 });

@@ -19,6 +19,9 @@ contract Subscriptions {
   struct Producer {
     address[] subscribers;
     uint lastPayment;
+    // TODO: We need to keep track of the last time a subscriber has been charged
+    // in order to allow for the most flexible charge system possible 
+    // where users are charged from the their last payment until now
   }
 
   mapping (address => Producer) producers;
