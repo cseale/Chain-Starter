@@ -5,10 +5,10 @@ contract Subscriptions {
   address public serviceAddress;
 
   // ETH charge per week, in Gwei
-  uint weeklyCharge = 9;
+  uint weeklyCharge = 90 finney;
 
   // Service charge is 10%
-  uint serviceCharge = 1;
+  uint serviceCharge = 10 finney;
 
   // week in unix time
   uint week = 604800;
@@ -136,7 +136,7 @@ contract Subscriptions {
     // calculate payout
     for (uint i = 0; i < producer.subscribers.length; i++) {
       // get subscriber 
-      address subscriberAddress = producer.subscribers[1];
+      address subscriberAddress = producer.subscribers[i];
       Subscriber storage subscriber = subscribers[subscriberAddress];
       //check balance
       if (subscriber.balance >= weeklyCharge) {

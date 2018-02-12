@@ -66,6 +66,7 @@ contract('Subscriptions', function (accounts) {
     var subscriberAccount = accounts[0];
     var producerAccount = accounts[1];
     var valueToSend = web3.toWei(1, "ether");
+    var expectedBalance = web3.toWei(0.9, "ether");
     var patrecoin;
     return Subscriptions.deployed().then(function (instance) {
       patrecoin = instance;
@@ -81,7 +82,8 @@ contract('Subscriptions', function (accounts) {
     })
     // assert
     .then(function () {
-      assert.fail()
+      console.log(web3.eth.getBalance(patrecoin.address).toString(10));
+      assert.equal(web3.eth.getBalance(patrecoin.address), expectedBalance)
     });
   });
 });
