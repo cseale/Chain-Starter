@@ -17,7 +17,7 @@ contract Subscriptions {
   // Each producer has a public address
   // and a list of their subscribers
   struct Producer {
-    address[] subscribers;
+    Subscription[] subscribers;
     uint lastPayment;
     // TODO: We need to keep track of the last time a subscriber has been charged
     // in order to allow for the most flexible charge system possible 
@@ -31,15 +31,21 @@ contract Subscriptions {
   // and a list of people they are subscribed to
   struct Subscriber {
     uint balance; // defaults to zero
-    address[] subscribedTo; // defaults to empty array
+    Subscription[] subscribedTo; // defaults to empty array
   }
 
   mapping (address => Subscriber) subscribers;
+
+  struct Subscription {
+    address account;
+    uint chargePerSecond;
+    uint lastPaymentDate; 
+  }
   
   event Subscribed(address subscriber, address subscribedTo);
   event Unsubscribed(address subscriber, address subscribedTo);
   event Deposited(address subscriber, uint deposit  );
-  event Charged(address producer, address[] subsribers, uint payout, uint service);
+  event Charged(address producer, uint payout, uint service);
 
 
   function Subscriptions() public {
@@ -61,35 +67,35 @@ contract Subscriptions {
   // not they will be added to the array. 
   
   // This function execute if the sender and the subscriber are the same
-  function subscribe(address subscribeTo) public {
+  function subscribe(address subscribeTo, uint chargePerSecond) public {
     require(msg.sender != subscribeTo);
     // add subscribeTo address to subscriber if it doesn't exist
     // loop through subscribeTo array and subscribe
     Subscriber storage subscriber = subscribers[msg.sender];
     bool subscribedToExists = false;
     for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
-      if (subscriber.subscribedTo[i] == subscribeTo) {
+      if (subscriber.subscribedTo[i].account == subscribeTo) {
         subscribedToExists = true;
         break;
       }
     }
 
     if (!subscribedToExists) {
-      subscriber.subscribedTo.push(subscribeTo);
+      subscriber.subscribedTo.push(Subscription(subscribeTo, chargePerSecond, now));
     }
 
     // add msg sender address to producer subcribers array
     Producer storage producer = producers[subscribeTo];
     bool subscriberExists = false;
     for (uint j = 0; j < producer.subscribers.length; j++) {
-      if (producer.subscribers[i] == msg.sender) {
+      if (producer.subscribers[i].account == msg.sender) {
         subscriberExists = true;
         break;
       }
     }
 
     if (!subscriberExists) {
-      producer.subscribers.push(msg.sender);
+      producer.subscribers.push(Subscription(msg.sender, chargePerSecond, now));
     }
     Subscribed(msg.sender, subscribeTo);
   }
@@ -104,7 +110,7 @@ contract Subscriptions {
     // remove unsubscribeFrom address to subscriber if it exists
     Subscriber storage subscriber = subscribers[msg.sender];
     for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
-      if (subscriber.subscribedTo[i] == unsubscribeFrom) {
+      if (subscriber.subscribedTo[i].account == unsubscribeFrom) {
         remove(i, subscriber.subscribedTo);
         break;
       }
@@ -113,7 +119,7 @@ contract Subscriptions {
     // add msg sender address to producer subcribers array
     Producer storage producer = producers[unsubscribeFrom];
     for (uint j = 0; j < producer.subscribers.length; j++) {
-      if (producer.subscribers[i] == msg.sender) {
+      if (producer.subscribers[i].account == msg.sender) {
         remove(i, producer.subscribers);
         break;
       }
@@ -136,7 +142,7 @@ contract Subscriptions {
     // calculate payout
     for (uint i = 0; i < producer.subscribers.length; i++) {
       // get subscriber 
-      address subscriberAddress = producer.subscribers[i];
+      address subscriberAddress = producer.subscribers[i].account;
       Subscriber storage subscriber = subscribers[subscriberAddress];
       //check balance
       if (subscriber.balance >= weeklyCharge) {
@@ -149,12 +155,12 @@ contract Subscriptions {
     producer.lastPayment = now;
     msg.sender.transfer(payout);
     serviceAddress.transfer(serviceCharge);
-    Charged(msg.sender, producer.subscribers, payout, service);
+    Charged(msg.sender, payout, service);
   }
 
   // getSubscriptions(account) public constant
   // Allow users to see what subscriptions they have
-  function getSubscriptions(address account) public constant returns (address[]) {
+  function getSubscriptions(address account) public constant returns (Subscription[]) {
     return subscribers[account].subscribedTo;
   }
 
@@ -166,7 +172,7 @@ contract Subscriptions {
 
   // getSubscribers(account) public constant
   // Allow users to see what subscribers they have
-  function getSubscribers(address account) public constant returns (address[]) {
+  function getSubscribers(address account) public constant returns (Subscription[]) {
     return producers[account].subscribers;
   }
 
@@ -176,7 +182,7 @@ contract Subscriptions {
     return producers[account].lastPayment;
   }
 
-  function remove(uint index, address[] storage array) private returns(address[]) {
+  function remove(uint index, Subscription[] storage array) private returns(Subscription[]) {
       if (index >= array.length) {
         return;
       }
@@ -187,5 +193,9 @@ contract Subscriptions {
       delete array[array.length-1];
       array.length--;
       return array;
+  }
+
+  function updateSubscription() private returns (Subscription) {
+
   }
 }
