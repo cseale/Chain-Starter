@@ -4,40 +4,29 @@ contract Subscriptions {
   // service address
   address public serviceAddress;
 
-  // ETH charge per week, in Gwei
-  uint weeklyCharge = 90 finney;
-
   // Service charge is 10%
-  uint serviceCharge = 10 finney;
+  uint servicePercentage = 10;
 
   // week in unix time
   uint week = 604800;
 
-  // need a struct of Producers
-  // Each producer has a public address
-  // and a list of their subscribers
   struct Producer {
     Subscription[] subscribers;
     uint lastPayment;
-    // TODO: We need to keep track of the last time a subscriber has been charged
-    // in order to allow for the most flexible charge system possible 
-    // where users are charged from the their last payment until now
   }
 
   mapping (address => Producer) producers;
 
-  // Subscriber
-  // Each subscriber has a balance
-  // and a list of people they are subscribed to
   struct Subscriber {
-    uint balance; // defaults to zero
-    Subscription[] subscribedTo; // defaults to empty array
+    uint balance;
+    Subscription[] subscribedTo;
   }
 
   mapping (address => Subscriber) subscribers;
 
   struct Subscription {
     address account;
+    bool active;
     uint chargePerSecond;
     uint lastPaymentDate; 
   }
@@ -54,7 +43,6 @@ contract Subscriptions {
 
   // Deposit
   // Allow subscribers to deposit ETH
-  // Will be used for weekly payouts
   // Non-refundable
   function deposit() public payable {
     Subscriber storage subscriber = subscribers[msg.sender];
@@ -63,99 +51,101 @@ contract Subscriptions {
   }
 
   // subscribe()
-  // Checks if sender is already subscribed to the producer. If they are
-  // not they will be added to the array. 
-  
-  // This function execute if the sender and the subscriber are the same
+  // Activate/reactivate a subscription 
   function subscribe(address subscribeTo, uint chargePerSecond) public {
     require(msg.sender != subscribeTo);
-    // add subscribeTo address to subscriber if it doesn't exist
-    // loop through subscribeTo array and subscribe
+
     Subscriber storage subscriber = subscribers[msg.sender];
     bool subscribedToExists = false;
     for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
       if (subscriber.subscribedTo[i].account == subscribeTo) {
+        subscriber.subscribedTo[i].active = true;
         subscribedToExists = true;
         break;
       }
     }
 
-    if (!subscribedToExists) {
-      subscriber.subscribedTo.push(Subscription(subscribeTo, chargePerSecond, now));
+    // Here to reduce costs we assume that if the subscription doesn't exist in one,
+    // it doesn't exist in the other 
+    if (!subscribedToExists) { 
+      subscriber.subscribedTo.push(Subscription(subscribeTo, true, chargePerSecond, now));
+      producer.subscribers.push(Subscription(msg.sender, true, chargePerSecond, now));
+      Subscribed(msg.sender, subscribeTo);
+      return;
     }
 
-    // add msg sender address to producer subcribers array
+    // subscription must exist, therefore reactivate
     Producer storage producer = producers[subscribeTo];
-    bool subscriberExists = false;
     for (uint j = 0; j < producer.subscribers.length; j++) {
       if (producer.subscribers[i].account == msg.sender) {
-        subscriberExists = true;
+        subscriber.subscribedTo[i].active = true;
         break;
       }
-    }
-
-    if (!subscriberExists) {
-      producer.subscribers.push(Subscription(msg.sender, chargePerSecond, now));
     }
     Subscribed(msg.sender, subscribeTo);
   }
 
   // unsubscribe()
-  // Checks if sender is already subscribed to the producer. If they are they 
-  // will be removed from the array. 
-  // This function will not execute if the sender and the subscriber are the same
+  // Deactivates a subscription
   function unsubscribe(address unsubscribeFrom) public {
     require(msg.sender != unsubscribeFrom);
 
-    // remove unsubscribeFrom address to subscriber if it exists
+    bool subscriptionExists = false;
     Subscriber storage subscriber = subscribers[msg.sender];
     for (uint i = 0; i < subscriber.subscribedTo.length; i++) {
-      if (subscriber.subscribedTo[i].account == unsubscribeFrom) {
-        remove(i, subscriber.subscribedTo);
+      if (subscriber.subscribedTo[i].account == unsubscribeFrom && subscriber.subscribedTo[i].active) {
+        subscriptionExists = true;
+        subscriber.subscribedTo[i].active = false;
         break;
       }
     }
 
-    // add msg sender address to producer subcribers array
-    Producer storage producer = producers[unsubscribeFrom];
-    for (uint j = 0; j < producer.subscribers.length; j++) {
-      if (producer.subscribers[i].account == msg.sender) {
-        remove(i, producer.subscribers);
-        break;
+    if (subscriptionExists) {
+      Producer storage producer = producers[unsubscribeFrom];
+      for (uint j = 0; j < producer.subscribers.length; j++) {
+        if (producer.subscribers[i].account == msg.sender) {
+          subscriber.subscribedTo[i].active = false;
+          break;
+        }
       }
     }
+
     Unsubscribed(msg.sender, unsubscribeFrom);
   }
 
   // charge()
   // Allow contract to be executed by producer in order to collect weekly income.
-  // Slightly cumbersome user experience. Could allow automation for contract to be executed weekly on
-  // the producers behalf?
   function charge() external {
-    uint payout;
-    uint service;
-
     // only allow a producer to call the charge function once a week
     Producer storage producer = producers[msg.sender];
     require(producer.lastPayment + week <= now);
 
-    // calculate payout
+    // calculate payouts
+    uint totalPayout;
+    uint totalServiceCharge;
+
     for (uint i = 0; i < producer.subscribers.length; i++) {
-      // get subscriber 
-      address subscriberAddress = producer.subscribers[i].account;
-      Subscriber storage subscriber = subscribers[subscriberAddress];
-      //check balance
-      if (subscriber.balance >= weeklyCharge) {
-        subscriber.balance -= weeklyCharge + serviceCharge;
-        payout += weeklyCharge;
-        service += serviceCharge;
+      // get subscriber account and subscription details
+      Subscriber storage subscriber = subscribers[producer.subscribers[i].account];
+      uint payout = (now - producer.subscribers[i].lastPaymentDate) * producer.subscribers[i].chargePerSecond;
+      // check subscription & balance
+      if (producer.subscribers[i].active && subscriber.balance >= payout) {
+        // total payouts
+        uint serviceCharge = payout / servicePercentage;
+        totalServiceCharge += serviceCharge;
+        totalPayout += (payout - serviceCharge);
+
+        // storage writes
+        subscriber.balance -= payout; 
+        producer.subscribers[i].lastPaymentDate = now;
       } 
     }
-    // send total ETH to producer address
+    // storage writes
     producer.lastPayment = now;
-    msg.sender.transfer(payout);
-    serviceAddress.transfer(serviceCharge);
-    Charged(msg.sender, payout, service);
+    // transfer ETH
+    msg.sender.transfer(totalPayout);
+    serviceAddress.transfer(totalServiceCharge);
+    Charged(msg.sender, totalPayout, totalServiceCharge);
   }
 
   // getSubscriptions(account) public constant
@@ -180,22 +170,5 @@ contract Subscriptions {
   // Allow users to see what time they last collected payment
   function getLastPayment(address account) public constant returns (uint) {
     return producers[account].lastPayment;
-  }
-
-  function remove(uint index, Subscription[] storage array) private returns(Subscription[]) {
-      if (index >= array.length) {
-        return;
-      }
-
-      for (uint i = index; i<array.length-1; i++) {
-          array[i] = array[i+1];
-      }
-      delete array[array.length-1];
-      array.length--;
-      return array;
-  }
-
-  function updateSubscription() private returns (Subscription) {
-
   }
 }
