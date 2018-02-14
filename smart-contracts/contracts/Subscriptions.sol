@@ -10,6 +10,13 @@ contract Subscriptions {
   // week in unix time
   uint week = 604800;
 
+  struct Subscription {
+    address account;
+    bool active;
+    uint chargePerSecond;
+    uint lastPaymentDate; 
+  }
+
   struct Producer {
     Subscription[] subscribers;
     uint lastPayment;
@@ -23,13 +30,6 @@ contract Subscriptions {
   }
 
   mapping (address => Subscriber) subscribers;
-
-  struct Subscription {
-    address account;
-    bool active;
-    uint chargePerSecond;
-    uint lastPaymentDate; 
-  }
   
   event Subscribed(address subscriber, address subscribedTo);
   event Unsubscribed(address subscriber, address subscribedTo);
